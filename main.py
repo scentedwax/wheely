@@ -1,5 +1,7 @@
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -7,10 +9,7 @@ from kivy.properties import NumericProperty, ListProperty, StringProperty
 from kivy.animation import Animation
 from kivy.core.text import Label as CoreLabel
 from kivy.metrics import dp
-from kivy.graphics import (
-    Color, Triangle, Line, Ellipse, Rectangle,
-    PushMatrix, PopMatrix, Rotate,
-)
+from kivy.graphics import Color, Line, Ellipse, Rectangle, Triangle, PushMatrix, PopMatrix, Rotate
 from kivy.utils import get_color_from_hex
 
 import random
@@ -21,7 +20,6 @@ import math
 # ---------- Константы ----------
 DATA_FILE = "wheely_options.json"
 
-# Тёмная мистическая палитра
 SECTOR_COLORS = [
     "#6C5CE7", "#A29BFE", "#FD79A8", "#E84393",
     "#00CEC9", "#55EFC4", "#FAB1A0", "#FFEAA7",
@@ -48,48 +46,38 @@ DEFAULT_OPTIONS = [
     "А сам как думаешь?",
 ]
 
+PROMPT_TEXT = "Задай вопрос и крути"
+
 
 # ---------- Экран колеса ----------
 class WheelScreen(Screen):
     angle = NumericProperty(0)
-    result_text = StringProperty("Задай вопрос и крути")
+    result_text = StringProperty(PROMPT_TEXT)
     is_spinning = False
 
-    def on_pre_enter(self):
-        self.load_options()
+    def on_pre_enter(self, *args):
         self.update_wheel()
-
-    def load_options(self):
-        app = App.get_running_app()
-        if os.path.exists(DATA_FILE):
-            try:
-                with open(DATA_FILE, encoding="utf-8") as f:
-                    app.options = json.load(f)
-            except Exception:
-                app.options = list(DEFAULT_OPTIONS)
-        else:
-            app.options = list(DEFAULT_OPTIONS)
-            app.save_options()
 
     def update_wheel(self):
         app = App.get_running_app()
-        self.ids.wheel.options = app.options
-        self.result_text = "Задай вопрос и крути"
+        self.ids.wheel.options = list(app.options)
+        if not self.is_spinning:
+            self.result_text = PROMPT_TEXT
 
     def spin(self):
         if self.is_spinning:
             return
         app = App.get_running_app()
-        n = len(app.options)
-        if n < 2:
+        if len(app.options) < 2:
             self.result_text = "Нужно хотя бы 2 ответа"
             return
 
         self.is_spinning = True
         self.result_text = "..."
 
-        turns = random.randint(5, 9)
-        target = self.angle + turns * 360 + random.randint(0, 360)
+        # не даём углу расти бесконечно
+        self.angle = self.angle % 360
+        target = self.angle + random.randint(5, 9) * 360 + random.uniform(0, 360)
 
         anim = Animation(angle=target, duration=4.0, t="out_quint")
         anim.bind(on_complete=self.show_result)
@@ -99,13 +87,12 @@ class WheelScreen(Screen):
         app = App.get_running_app()
         n = len(app.options)
         sector = 360 / n
-        # Указатель сверху = угол 0.
-        # Сектор i занимает углы [angle + i*sector, angle + (i+1)*sector].
-        # Хотим найти i, для которого этот диапазон накрывает 0 (или 360).
-        # Эквивалентно: найти сектор, в который попадает точка 360° (== 0°).
+        # Углы отсчитываются по часовой стрелке от верха (как в WheelWidget).
+        # Сектор i занимает [angle + i*sector, angle + (i+1)*sector].
+        # Указатель смотрит в точку 0°, ищем сектор, накрывающий её.
         normalized = (-self.angle) % 360
-        index = int(normalized // sector) % n
-        self.result_text = f"🔮 {app.options[index]}"
+        index = min(int(normalized // sector), n - 1)
+        self.result_text = app.options[index]
         self.is_spinning = False
 
         try:
@@ -117,7 +104,7 @@ class WheelScreen(Screen):
 
 # ---------- Экран списка ----------
 class ListScreen(Screen):
-    def on_pre_enter(self):
+    def on_pre_enter(self, *args):
         self.refresh()
 
     def refresh(self):
@@ -126,11 +113,19 @@ class ListScreen(Screen):
         for i, opt in enumerate(app.options):
             row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(5))
 
-            lbl = Label(text=f"{i+1}. {opt}", font_size="18sp")
+            lbl = Label(
+                text=f"{i + 1}. {opt}",
+                font_size="18sp",
+                halign="left",
+                valign="middle",
+                shorten=True,
+                shorten_from="right",
+            )
+            lbl.bind(size=lambda inst, size: setattr(inst, "text_size", size))
             row.add_widget(lbl)
 
             del_btn = Button(
-                text="✕",
+                text="X",
                 font_size="20sp",
                 size_hint_x=None,
                 width=dp(50),
@@ -165,76 +160,87 @@ class ListScreen(Screen):
 
 
 # ---------- Виджет колеса ----------
-class WheelWidget(BoxLayout):
+class WheelWidget(Widget):
     options = ListProperty([])
     angle = NumericProperty(0)
 
-    def on_options(self, *args):
-        self.redraw()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._textures = {}
+        self._redraw_trigger = Clock.create_trigger(self.redraw, -1)
+        self.bind(
+            options=self._redraw_trigger,
+            angle=self._redraw_trigger,
+            size=self._redraw_trigger,
+            pos=self._redraw_trigger,
+        )
+        self._redraw_trigger()
 
-    def on_angle(self, *args):
-        self.redraw()
+    def _get_texture(self, text, font_size):
+        key = (text, round(font_size, 1))
+        tex = self._textures.get(key)
+        if tex is None:
+            label = CoreLabel(text=text, font_size=font_size, color=(0.05, 0.05, 0.1, 1))
+            label.refresh()
+            tex = label.texture
+            if len(self._textures) > 200:
+                self._textures.clear()
+            self._textures[key] = tex
+        return tex
 
-    def on_size(self, *args):
-        self.redraw()
-
-    def on_pos(self, *args):
-        self.redraw()
-
-    def redraw(self):
+    def redraw(self, *args):
         self.canvas.clear()
         if not self.options:
             return
 
         cx, cy = self.center_x, self.center_y
         radius = min(self.width, self.height) / 2 - dp(30)
+        if radius <= 0:
+            return
         n = len(self.options)
         sector_deg = 360 / n
 
         def polar(angle_deg, r):
-            a = math.radians(angle_deg - 90)
+            # 0° = верх, угол растёт по часовой стрелке
+            a = math.radians(90 - angle_deg)
             return cx + r * math.cos(a), cy + r * math.sin(a)
 
+        font_size = max(dp(9), min(dp(14), radius / 11))
+        segments = max(3, int(sector_deg / 3) + 1)
+
         with self.canvas:
-            # --- Сектора ---
-            for i, opt in enumerate(self.options):
-                color_hex = SECTOR_COLORS[i % len(SECTOR_COLORS)]
-                Color(*get_color_from_hex(color_hex))
+            # --- Сектора (настоящие дуги, а не треугольники) ---
+            for i in range(n):
+                Color(*get_color_from_hex(SECTOR_COLORS[i % len(SECTOR_COLORS)]))
+                start = (self.angle + i * sector_deg) % 360
+                Ellipse(
+                    pos=(cx - radius, cy - radius),
+                    size=(radius * 2, radius * 2),
+                    angle_start=start,
+                    angle_end=start + sector_deg,
+                    segments=segments,
+                )
 
-                a1 = self.angle + i * sector_deg
-                a2 = self.angle + (i + 1) * sector_deg
-                p1 = polar(a1, radius)
-                p2 = polar(a2, radius)
-                Triangle(points=[cx, cy, p1[0], p1[1], p2[0], p2[1]])
-
-            # --- Текст (вращается вместе с колесом) ---
+            # --- Текст вдоль сектора ---
             for i, opt in enumerate(self.options):
                 mid_angle = self.angle + (i + 0.5) * sector_deg
+                tx, ty = polar(mid_angle, radius * 0.62)
 
-                # Позиция текста — на радиусе 0.7R от центра
-                tx, ty = polar(mid_angle, radius * 0.65)
+                short = opt if len(opt) <= 16 else opt[:15] + "…"
+                tex = self._get_texture(short, font_size)
 
-                label = CoreLabel(
-                    text=opt[:16],
-                    font_size=dp(13),
-                    color=(0.05, 0.05, 0.1, 1),
-                )
-                label.refresh()
-                texture = label.texture
+                # Kivy Rotate крутит против часовой; направление текста = 90 - mid_angle
+                rot = 90 - mid_angle
+                if math.cos(math.radians(rot)) < 0:
+                    rot += 180  # не переворачиваем текст вверх ногами
 
-                # Поворачиваем текст так, чтобы он "лежал" вдоль сектора.
-                # В Kivy Rotate вращает вокруг origin (по умолчанию 0,0).
-                # Мы смещаем origin в точку текста и вращаем на mid_angle.
                 PushMatrix()
-                Rotate(
-                    angle=-(mid_angle - 90),  # компенсируем сдвиг -90 в polar()
-                    origin=(tx, ty),
-                )
+                Rotate(angle=rot, origin=(tx, ty))
                 Color(1, 1, 1, 1)
                 Rectangle(
-                    texture=texture,
-                    pos=(tx - texture.width / 2, ty - texture.height / 2),
-                    size=texture.size,
+                    texture=tex,
+                    pos=(tx - tex.width / 2, ty - tex.height / 2),
+                    size=tex.size,
                 )
                 PopMatrix()
 
@@ -254,9 +260,16 @@ class WheelWidget(BoxLayout):
                 cx, cy + radius - dp(25),
             ])
 
+
 # ---------- Приложение ----------
 class WheelyApp(App):
     options = ListProperty(list(DEFAULT_OPTIONS))
+
+    @property
+    def data_path(self):
+        # user_data_dir доступен для записи и на Android, и на десктопе
+        os.makedirs(self.user_data_dir, exist_ok=True)
+        return os.path.join(self.user_data_dir, DATA_FILE)
 
     def build(self):
         self.title = "Wheely"
@@ -268,19 +281,24 @@ class WheelyApp(App):
         return sm
 
     def load_options(self):
-        if os.path.exists(DATA_FILE):
+        if os.path.exists(self.data_path):
             try:
-                with open(DATA_FILE, encoding="utf-8") as f:
-                    self.options = json.load(f)
+                with open(self.data_path, encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list) and all(isinstance(x, str) for x in data):
+                    self.options = data
+                    return
             except Exception:
-                self.options = list(DEFAULT_OPTIONS)
-        else:
-            self.options = list(DEFAULT_OPTIONS)
-            self.save_options()
+                pass
+        self.options = list(DEFAULT_OPTIONS)
+        self.save_options()
 
     def save_options(self):
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(self.options, f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.data_path, "w", encoding="utf-8") as f:
+                json.dump(list(self.options), f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
