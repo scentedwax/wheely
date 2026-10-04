@@ -1,104 +1,54 @@
 #:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 
 <WheelScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.08, 0.07, 0.15, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
     BoxLayout:
         orientation: 'vertical'
-        padding: dp(15)
-        spacing: dp(10)
+        padding: dp(20), dp(26), dp(20), dp(22)
+        spacing: dp(14)
 
         Label:
-            text: root.result_text
-            font_size: '26sp'
+            text: 'W H E E L Y'
+            font_size: '13sp'
             bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: 0.12
+            color: 1, 0.62, 0.4, 0.9
+            size_hint_y: None
+            height: dp(22)
+
+        GlassCard:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(118)
+            padding: dp(16), dp(12)
+            spacing: dp(2)
+
+            Label:
+                text: root.caption_text
+                font_size: '11sp'
+                bold: True
+                color: 1, 0.62, 0.4, 0.95
+                size_hint_y: None
+                height: dp(18)
+
+            Label:
+                text: root.result_text
+                font_size: root.result_fs
+                bold: True
+                color: 1, 0.97, 0.93, 1
+                opacity: root.result_opacity
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.width, self.height
 
         WheelWidget:
             id: wheel
             angle: root.angle
-            size_hint_y: 0.6
 
-        BoxLayout:
-            size_hint_y: 0.14
-            spacing: dp(10)
-            Button:
-                text: 'Крутить!'
-                font_size: '22sp'
-                background_color: 0.4, 0.3, 0.9, 1
-                on_press: root.spin()
-            Button:
-                text: 'Ответы'
-                font_size: '20sp'
-                size_hint_x: 0.5
-                background_color: 0.2, 0.2, 0.35, 1
-                on_press: app.root.current = 'list'
-
-
-<ListScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.08, 0.07, 0.15, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    BoxLayout:
-        orientation: 'vertical'
-        padding: dp(15)
-        spacing: dp(8)
-
-        Label:
-            text: 'Ответы оракула'
-            font_size: '22sp'
+        PillButton:
+            style: 'primary'
+            text: root.spin_label
+            font_size: '19sp'
             bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: 0.08
-
-        ScrollView:
-            size_hint_y: 0.6
-            BoxLayout:
-                id: options_list
-                orientation: 'vertical'
-                size_hint_y: None
-                height: self.minimum_height
-                spacing: dp(4)
-
-        BoxLayout:
-            size_hint_y: 0.1
-            spacing: dp(8)
-            TextInput:
-                id: new_option
-                hint_text: 'Новый ответ...'
-                multiline: False
-                font_size: '18sp'
-                background_color: 0.15, 0.15, 0.25, 1
-                foreground_color: 1, 1, 1, 1
-                cursor_color: 1, 1, 1, 1
-                on_text_validate: root.add_option()
-            Button:
-                text: 'Добавить'
-                font_size: '16sp'
-                size_hint_x: 0.4
-                background_color: 0.4, 0.3, 0.9, 1
-                on_press: root.add_option()
-
-        BoxLayout:
-            size_hint_y: 0.11
-            spacing: dp(8)
-            Button:
-                text: 'Сбросить'
-                font_size: '16sp'
-                background_color: 0.5, 0.2, 0.2, 1
-                on_press: root.reset_options()
-            Button:
-                text: 'Назад'
-                font_size: '16sp'
-                background_color: 0.2, 0.2, 0.35, 1
-                on_press: app.root.current = 'wheel'
+            size_hint_y: None
+            height: dp(58)
+            on_release: root.spin()
