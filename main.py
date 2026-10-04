@@ -7,7 +7,10 @@ from kivy.properties import NumericProperty, ListProperty, StringProperty
 from kivy.animation import Animation
 from kivy.core.text import Label as CoreLabel
 from kivy.metrics import dp
-from kivy.graphics import Color, Triangle, Line, Ellipse, Rectangle
+from kivy.graphics import (
+    Color, Triangle, Line, Ellipse, Rectangle,
+    PushMatrix, PopMatrix, Rotate,
+)
 from kivy.utils import get_color_from_hex
 
 import random
@@ -96,7 +99,11 @@ class WheelScreen(Screen):
         app = App.get_running_app()
         n = len(app.options)
         sector = 360 / n
-        normalized = (360 - (self.angle % 360)) % 360
+        # Указатель сверху = угол 0.
+        # Сектор i занимает углы [angle + i*sector, angle + (i+1)*sector].
+        # Хотим найти i, для которого этот диапазон накрывает 0 (или 360).
+        # Эквивалентно: найти сектор, в который попадает точка 360° (== 0°).
+        normalized = (-self.angle) % 360
         index = int(normalized // sector) % n
         self.result_text = f"🔮 {app.options[index]}"
         self.is_spinning = False
@@ -189,6 +196,7 @@ class WheelWidget(BoxLayout):
             return cx + r * math.cos(a), cy + r * math.sin(a)
 
         with self.canvas:
+            # --- Сектора ---
             for i, opt in enumerate(self.options):
                 color_hex = SECTOR_COLORS[i % len(SECTOR_COLORS)]
                 Color(*get_color_from_hex(color_hex))
@@ -199,8 +207,12 @@ class WheelWidget(BoxLayout):
                 p2 = polar(a2, radius)
                 Triangle(points=[cx, cy, p1[0], p1[1], p2[0], p2[1]])
 
-                mid_angle = (a1 + a2) / 2
-                tx, ty = polar(mid_angle, radius * 0.7)
+            # --- Текст (вращается вместе с колесом) ---
+            for i, opt in enumerate(self.options):
+                mid_angle = self.angle + (i + 0.5) * sector_deg
+
+                # Позиция текста — на радиусе 0.7R от центра
+                tx, ty = polar(mid_angle, radius * 0.65)
 
                 label = CoreLabel(
                     text=opt[:16],
@@ -209,26 +221,38 @@ class WheelWidget(BoxLayout):
                 )
                 label.refresh()
                 texture = label.texture
+
+                # Поворачиваем текст так, чтобы он "лежал" вдоль сектора.
+                # В Kivy Rotate вращает вокруг origin (по умолчанию 0,0).
+                # Мы смещаем origin в точку текста и вращаем на mid_angle.
+                PushMatrix()
+                Rotate(
+                    angle=-(mid_angle - 90),  # компенсируем сдвиг -90 в polar()
+                    origin=(tx, ty),
+                )
                 Color(1, 1, 1, 1)
                 Rectangle(
                     texture=texture,
                     pos=(tx - texture.width / 2, ty - texture.height / 2),
                     size=texture.size,
                 )
+                PopMatrix()
 
+            # --- Контур ---
             Color(0.9, 0.9, 1, 1)
             Line(circle=(cx, cy, radius), width=dp(3))
 
+            # --- Ступица ---
             Color(0.1, 0.1, 0.2, 1)
             Ellipse(pos=(cx - dp(22), cy - dp(22)), size=(dp(44), dp(44)))
 
+            # --- Указатель ---
             Color(1, 1, 1, 1)
             Triangle(points=[
                 cx - dp(18), cy + radius + dp(5),
                 cx + dp(18), cy + radius + dp(5),
                 cx, cy + radius - dp(25),
             ])
-
 
 # ---------- Приложение ----------
 class WheelyApp(App):
