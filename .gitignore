@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Kivy
+.kivy/
+wheely_options.json
+
+# Buildozer
+.buildozer/
+.buildozer_global/
+bin/
+*.apk
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
