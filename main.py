@@ -92,7 +92,7 @@ class WheelScreen(Screen):
         anim.bind(on_complete=self.show_result)
         anim.start(self)
 
-    def show_result(self):
+    def show_result(self, *args):
         app = App.get_running_app()
         n = len(app.options)
         sector = 360 / n
