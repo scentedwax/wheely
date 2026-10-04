@@ -5,7 +5,7 @@ package.domain = org.scentedwax
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,wav
 version = 0.1
-requirements = python3,kivy,plyer
+requirements = python3,kivy,plyer,jnius>=1.4.0
 orientation = portrait
 fullscreen = 0
 android.permissions = VIBRATE
@@ -15,5 +15,6 @@ android.ndk_api = 21
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 buildozer.global_dir = .buildozer_global
+log_level = 2
 android.ndk = 25b
 android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653
