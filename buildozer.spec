@@ -15,3 +15,5 @@ android.ndk_api = 21
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 buildozer.global_dir = .buildozer_global
+android.ndk = 25b
+android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653
