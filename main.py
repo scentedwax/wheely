@@ -23,10 +23,10 @@ DATA_FILE = "wheely_options.json"
 
 # Тёмная мистическая палитра
 SECTOR_COLORS = [
-    "#6C5CE7", "#A29BFE", "#FD79A8", "#E84393",
-    "#00CEC9", "#55EFC4", "#FAB1A0", "#FFEAA7",
-    "#74B9FF", "#81ECEC", "#DFE6E9", "#B2BEC3",
-    "#FF7675", "#FDCB6E", "#E17055", "#00B894",
+    "#FF8C42", "#FFB26B", "#E85D75", "#C44B8A",
+    "#8B5FBF", "#FF6B6B", "#FFA45B", "#D65DB1",
+    "#FF8C42", "#FFB26B", "#E85D75", "#C44B8A",
+    "#8B5FBF", "#FF6B6B", "#FFA45B", "#D65DB1",
 ]
 
 DEFAULT_OPTIONS = [
