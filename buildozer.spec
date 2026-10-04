@@ -5,6 +5,7 @@ package.domain = org.scentedwax
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,wav
 icon.filename = %(source.dir)s/assets/wheely_icon.jpg
+android.apptheme = "@android:style/Theme.NoTitleBar"
 version = 0.2
 requirements = python3,kivy,plyer
 orientation = portrait
