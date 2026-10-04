@@ -1,9 +1,16 @@
 #:import dp kivy.metrics.dp
 
+<Button>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0.24, 0.16, 0.29, 1
+    color: 1, 0.91, 0.84, 1
+    border: 0, 0, 0, 0
+
 <WheelScreen>:
     canvas.before:
         Color:
-            rgba: 0.08, 0.07, 0.15, 1
+            rgba: 0.102, 0.071, 0.125, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -17,7 +24,7 @@
             text: root.result_text
             font_size: '26sp'
             bold: True
-            color: 1, 1, 1, 1
+            color: 1, 0.91, 0.84, 1
             size_hint_y: 0.12
 
         WheelWidget:
@@ -29,22 +36,28 @@
             size_hint_y: 0.14
             spacing: dp(10)
             Button:
-                text: '🔮 Крутить!'
+                text: 'Крутить!'
                 font_size: '22sp'
-                background_color: 0.4, 0.3, 0.9, 1
+                bold: True
+                background_normal: ''
+                background_down: ''
+                background_color: 1, 0.55, 0.26, 1
+                color: 0.1, 0.05, 0.1, 1
                 on_press: root.spin()
             Button:
-                text: '📝 Ответы'
+                text: 'Ответы'
                 font_size: '20sp'
                 size_hint_x: 0.5
-                background_color: 0.2, 0.2, 0.35, 1
+                background_normal: ''
+                background_down: ''
+                background_color: 0.24, 0.16, 0.29, 1
+                color: 1, 0.91, 0.84, 1
                 on_press: app.root.current = 'list'
-
 
 <ListScreen>:
     canvas.before:
         Color:
-            rgba: 0.08, 0.07, 0.15, 1
+            rgba: 0.102, 0.071, 0.125, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -58,7 +71,7 @@
             text: 'Ответы оракула'
             font_size: '22sp'
             bold: True
-            color: 1, 1, 1, 1
+            color: 1, 0.91, 0.84, 1
             size_hint_y: 0.08
 
         ScrollView:
@@ -78,26 +91,36 @@
                 hint_text: 'Новый ответ...'
                 multiline: False
                 font_size: '18sp'
-                background_color: 0.15, 0.15, 0.25, 1
-                foreground_color: 1, 1, 1, 1
-                cursor_color: 1, 1, 1, 1
+                background_color: 0.18, 0.12, 0.22, 1
+                foreground_color: 1, 0.91, 0.84, 1
+                cursor_color: 1, 0.55, 0.26, 1
+                on_text_validate: root.add_option()
             Button:
                 text: 'Добавить'
                 font_size: '16sp'
                 size_hint_x: 0.4
-                background_color: 0.4, 0.3, 0.9, 1
+                background_normal: ''
+                background_down: ''
+                background_color: 1, 0.55, 0.26, 1
+                color: 0.1, 0.05, 0.1, 1
                 on_press: root.add_option()
 
         BoxLayout:
             size_hint_y: 0.11
             spacing: dp(8)
             Button:
-                text: '↺ Сбросить'
+                text: 'Сбросить'
                 font_size: '16sp'
-                background_color: 0.5, 0.2, 0.2, 1
+                background_normal: ''
+                background_down: ''
+                background_color: 0.5, 0.2, 0.25, 1
+                color: 1, 0.91, 0.84, 1
                 on_press: root.reset_options()
             Button:
-                text: '← Назад'
+                text: 'Назад'
                 font_size: '16sp'
-                background_color: 0.2, 0.2, 0.35, 1
+                background_normal: ''
+                background_down: ''
+                background_color: 0.24, 0.16, 0.29, 1
+                color: 1, 0.91, 0.84, 1
                 on_press: app.root.current = 'wheel'
