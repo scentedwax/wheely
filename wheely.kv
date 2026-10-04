@@ -44,11 +44,75 @@
             id: wheel
             angle: root.angle
 
-        PillButton:
-            style: 'primary'
-            text: root.spin_label
-            font_size: '19sp'
-            bold: True
+        BoxLayout:
             size_hint_y: None
             height: dp(58)
-            on_release: root.spin()
+            spacing: dp(12)
+
+            PillButton:
+                style: 'primary'
+                text: root.spin_label
+                font_size: '19sp'
+                bold: True
+                on_release: root.spin()
+
+            PillButton:
+                style: 'ghost'
+                text: 'Что это?'
+                font_size: '16sp'
+                size_hint_x: None
+                width: dp(120)
+                on_release: root.show_info()
+
+
+<InfoOverlay>:
+    opacity: 0
+    canvas.before:
+        Color:
+            rgba: 0.02, 0.01, 0.06, 0.74
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    GlassCard:
+        id: card
+        orientation: 'vertical'
+        size_hint: None, None
+        width: min(root.width - dp(48), dp(380))
+        height: self.minimum_height
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        padding: dp(22)
+        spacing: dp(14)
+        radius: dp(26)
+        tint: 0.14, 0.08, 0.24, 0.95
+
+        Label:
+            text: 'Что это?'
+            font_size: '22sp'
+            bold: True
+            color: 1, 0.97, 0.93, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        Label:
+            text: 'Wheely — колесо-оракул для быстрых решений. Задай вопрос, нажми «Крутить» и посмотри, на каком секторе остановится колесо: этот ответ появится вверху.\n\nЭто игра для развлечения — по-настоящему важные решения лучше принимать самому.'
+            font_size: '16sp'
+            color: 1, 0.93, 0.86, 0.85
+            halign: 'left'
+            valign: 'top'
+            line_height: 1.2
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        PillButton:
+            style: 'primary'
+            text: 'Понятно'
+            font_size: '17sp'
+            bold: True
+            size_hint_y: None
+            height: dp(50)
+            on_release: root.close()

@@ -18,6 +18,12 @@ jobs:
       with:
         python-version: '3.9'
 
+    - name: Set up Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+
     - name: Install compatible Android NDK (25b)
       run: |
         echo "Installing NDK 25b..."

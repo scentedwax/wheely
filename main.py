@@ -385,6 +385,56 @@ class PillButton(ButtonBehavior, Label):
                 Line(rounded_rectangle=(x, y, w, h, r), width=dp(1))
 
 
+# ---------- Окошко «Что это?» ----------
+class InfoOverlay(FloatLayout):
+    """Затемнение + стеклянная карточка с описанием. Закрывается кнопкой,
+    тапом мимо карточки и кнопкой «Назад»/Esc."""
+    dismiss_cb = None
+    _closing = False
+
+    def open(self):
+        self.opacity = 0
+        Window.bind(on_keyboard=self._on_key)
+        Animation(opacity=1, d=0.22, t="out_quad").start(self)
+
+    def close(self):
+        if self._closing:
+            return
+        self._closing = True
+        anim = Animation(opacity=0, d=0.18, t="in_quad")
+        anim.bind(on_complete=self._remove)
+        anim.start(self)
+
+    def _remove(self, *args):
+        Window.unbind(on_keyboard=self._on_key)
+        if self.parent:
+            self.parent.remove_widget(self)
+        if self.dismiss_cb:
+            self.dismiss_cb()
+
+    def _on_key(self, window, key, *args):
+        if key == 27:  # Esc / системная кнопка «Назад» на Android
+            self.close()
+            return True
+        return False
+
+    def on_touch_down(self, touch):
+        if self._closing:
+            return True
+        if not self.ids.card.collide_point(*touch.pos):
+            self.close()
+            return True
+        super().on_touch_down(touch)
+        return True  # окно модальное: касания не доходят до колеса
+
+    def on_touch_move(self, touch):
+        return True
+
+    def on_touch_up(self, touch):
+        super().on_touch_up(touch)
+        return True
+
+
 # ---------- Экран колеса ----------
 class WheelScreen(FloatLayout):
     angle = NumericProperty(0)
@@ -395,6 +445,19 @@ class WheelScreen(FloatLayout):
     result_opacity = NumericProperty(0.75)
     is_spinning = False
     _last_idx = 0
+    _info = None
+
+    def show_info(self):
+        if self._info is not None:
+            return
+        ov = InfoOverlay()
+        ov.dismiss_cb = self._info_closed
+        self._info = ov
+        self.add_widget(ov)
+        ov.open()
+
+    def _info_closed(self):
+        self._info = None
 
     def on_kv_post(self, base_widget):
         self.ids.wheel.options = list(App.get_running_app().answers)
@@ -434,7 +497,7 @@ class WheelScreen(FloatLayout):
         self.spin_label = "Крутим..."
 
         target = self.angle + random.randint(5, 9) * 360 + random.uniform(0, 360)
-        anim = Animation(angle=target, duration=4.2, t="out_quint")
+        anim = Animation(angle=target, duration=11.2, t="out_quint")
         anim.bind(on_complete=self.show_result)
         anim.start(self)
 
