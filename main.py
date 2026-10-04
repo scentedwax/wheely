@@ -16,6 +16,7 @@ from kivy.graphics import (
     PushMatrix, PopMatrix, Rotate,
 )
 from kivy.utils import get_color_from_hex
+from kivy.utils import platform
 
 import random
 import os
@@ -718,6 +719,8 @@ class WheelyApp(App):
 
     def build(self):
         self.title = "Wheely"
+        if platform == 'win':
+            Window.size = (332, 690)
         Window.clearcolor = (0.04, 0.025, 0.08, 1)
 
         self.sfx = Sfx(os.path.join(self.user_data_dir, "sounds"))
