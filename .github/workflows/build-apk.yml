@@ -40,7 +40,6 @@ jobs:
     - name: Install Buildozer and compatible Cython
       run: |
         pip install buildozer
-        pip install "Cython<3.0"  # ← Ключевой момент
 
     - name: Build APK
       run: |

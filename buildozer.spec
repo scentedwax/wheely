@@ -5,7 +5,7 @@ package.domain = org.scentedwax
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,wav
 version = 0.1
-requirements = python3,kivy,plyer,jnius>=1.4.0
+requirements = python3,kivy,plyer
 orientation = portrait
 fullscreen = 0
 android.permissions = VIBRATE
